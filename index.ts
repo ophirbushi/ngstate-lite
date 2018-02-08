@@ -35,6 +35,12 @@ class Store<T, A> extends BehaviorSubject<T> {
         private effects?: Effects<T, A>
     ) {
         super(initialValue);
+
+        if (this.effects) {
+            this.effects.actionDispatchedFromEffects.subscribe((couple) => {
+                this.dispatch(couple.action, couple.payload);
+            });
+        }
     }
 
     dispatch<ActionType extends keyof A>(
@@ -43,19 +49,18 @@ class Store<T, A> extends BehaviorSubject<T> {
     ) {
         this.next(this.reducer.reduce(this.value, action, payload));
         if (this.effects) {
-            this.effects.actionDispatchedFromEffects.subscribe((couple) => {
-                this.dispatch(couple.action, couple.payload);
-            });
             this.effects.actionDispatched.next({ action, payload });
         }
     }
 }
 
 
-interface NameStore { name: string }
+type StoreSize = 'small' | 'medium' | 'big';
+interface NameStore { name: string, size: StoreSize }
 
 interface NameStoreActions {
     'setName': string;
+    'setSize': StoreSize;
     'deleteName': any;
     'shortenName': number;
 }
@@ -70,6 +75,9 @@ const reducer = new Reducer<NameStore, NameStoreActions>(function (state, action
     if (this.is('shortenName', action, payload)) {
         return { ...state, name: state.name.substring(0, state.name.length - payload) };
     }
+    if (this.is('setSize', action, payload)) {
+        return { ...state, size: payload };
+    }
     return state;
 });
 
@@ -80,10 +88,16 @@ effects.actionOfType('setName')
         effects.dispatch('shortenName', 1);
     });
 
-const store = new Store<NameStore, NameStoreActions>({ name: null }, reducer, effects);
+effects.actionOfType('setSize')
+    .subscribe(payload => {
+        effects.dispatch('setName', 'now we are ' + payload);
+    });
+
+const store = new Store<NameStore, NameStoreActions>({ name: null, size: null }, reducer, effects);
 
 store.subscribe(console.log)
 
 store.dispatch('setName', 'Marketplace');
+store.dispatch('setSize', 'big');
 store.dispatch('shortenName', 3);
 store.dispatch('deleteName');
