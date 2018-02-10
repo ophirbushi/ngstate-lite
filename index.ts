@@ -2,6 +2,7 @@ import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import 'rxjs/add/operator/filter';
 import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/distinctUntilChanged';
 import { Observable } from 'rxjs/Observable';
 
 class Reducer<T, A> {
@@ -37,9 +38,10 @@ class Store<T, A> extends BehaviorSubject<T> {
         super(initialValue);
 
         if (this.effects) {
-            this.effects.actionDispatchedFromEffects.subscribe((couple) => {
-                this.dispatch(couple.action, couple.payload);
-            });
+            this.effects.actionDispatchedFromEffects
+                .subscribe((couple) => {
+                    this.dispatch(couple.action, couple.payload);
+                });
         }
     }
 
@@ -51,6 +53,15 @@ class Store<T, A> extends BehaviorSubject<T> {
         if (this.effects) {
             this.effects.actionDispatched.next({ action, payload });
         }
+    }
+
+    select<K extends keyof T>(key: K): Observable<T[K]>
+    select<K extends keyof T>(mapFunction: (value: T) => T[K]): Observable<T[K]>
+    select<K extends keyof T>(keyOrMapFn: (K) | ((value: T) => T[K])): Observable<T[K]> {
+        const mapFn: (value: T) => T[K] = typeof keyOrMapFn === 'string' ? value => value[keyOrMapFn] : keyOrMapFn;
+        return this.asObservable()
+            .map(mapFn)
+            .distinctUntilChanged();
     }
 }
 
@@ -78,6 +89,7 @@ const reducer = new Reducer<NameStore, NameStoreActions>(function (state, action
     if (this.is('setSize', action, payload)) {
         return { ...state, size: payload };
     }
+
     return state;
 });
 
@@ -89,15 +101,18 @@ effects.actionOfType('setName')
     });
 
 effects.actionOfType('setSize')
-    .subscribe(payload => {
+    .subscribe((payload) => {
         effects.dispatch('setName', 'now we are ' + payload);
     });
 
 const store = new Store<NameStore, NameStoreActions>({ name: null, size: null }, reducer, effects);
 
-store.subscribe(console.log)
+//store.subscribe(console.log)
+
+const size$ = store.select('size');
 
 store.dispatch('setName', 'Marketplace');
 store.dispatch('setSize', 'big');
 store.dispatch('shortenName', 3);
 store.dispatch('deleteName');
+
