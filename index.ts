@@ -18,6 +18,8 @@ class Effects<T, A>{
 
     dispatch: <K extends keyof A>(action: K, payload: A[K]) => void;
 
+    constructor(public registerEffects: (this: Effects<T, A>) => void = () => { }) { }
+
     actionOfType<K extends keyof A>(action: K): Observable<A[K]> {
         return this.actions$
             .filter(couple => couple.action === action)
@@ -37,6 +39,7 @@ class Store<T, A> extends BehaviorSubject<T> {
         if (this.effects) {
             this.effects.actions$ = this.actionDispatched.asObservable();
             this.effects.dispatch = this.dispatch.bind(this);
+            this.effects.registerEffects();
         }
     }
 
@@ -92,17 +95,18 @@ const reducer = new Reducer<NameStore, NameStoreActions>(
     }
 );
 
-const effects = new Effects<NameStore, NameStoreActions>();
-
-effects.actionOfType(SET_NAME)
-    .subscribe((payload) => {
-        effects.dispatch(SHORTEN_NAME, 1);
-    });
-
-effects.actionOfType(SET_SIZE)
-    .subscribe((payload) => {
-        effects.dispatch(SET_NAME, 'now we are ' + payload);
-    });
+const effects = new Effects<NameStore, NameStoreActions>(
+    function () {
+        this.actionOfType(SET_NAME)
+            .subscribe((payload) => {
+                effects.dispatch(SHORTEN_NAME, 1);
+            });
+        this.actionOfType(SET_SIZE)
+            .subscribe((payload) => {
+                effects.dispatch(SET_NAME, 'now we are ' + payload);
+            });
+    }
+);
 
 const store = new Store<NameStore, NameStoreActions>({ name: null, size: null }, reducer, effects);
 
