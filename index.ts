@@ -33,7 +33,7 @@ class Store<T, A> extends BehaviorSubject<T> {
         private effects?: Effects<T, A>
     ) {
         super(initialValue);
-        if (this.effects) this.effects.dispatch = this.dispatch;
+        if (this.effects) this.effects.dispatch = this.dispatch.bind(this);
     }
 
     dispatch<ActionType extends keyof A>(
@@ -107,6 +107,7 @@ const store = new Store<NameStore, NameStoreActions>({ name: null, size: null },
 //store.subscribe(console.log)
 
 const size$ = store.select('size');
+size$.subscribe(console.log);
 
 store.dispatch(SET_NAME, 'Marketplace');
 store.dispatch(SET_SIZE, 'big');
