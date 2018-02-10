@@ -14,18 +14,19 @@ class Reducer<T, A> {
 }
 
 class Effects<T, A>{
-    actionDispatched: Subject<{ action: keyof A, payload: A[keyof A] }> = new Subject();
+    actions$: Observable<{ action: keyof A, payload: A[keyof A] }>;
 
     dispatch: <K extends keyof A>(action: K, payload: A[K]) => void;
 
     actionOfType<K extends keyof A>(action: K): Observable<A[K]> {
-        return this.actionDispatched
+        return this.actions$
             .filter(couple => couple.action === action)
             .map(couple => <any>couple.payload);
     }
 }
 
 class Store<T, A> extends BehaviorSubject<T> {
+    private actionDispatched = new Subject<{ action: keyof A, payload: A[keyof A] }>();
 
     constructor(
         initialValue: T,
@@ -33,7 +34,10 @@ class Store<T, A> extends BehaviorSubject<T> {
         private effects?: Effects<T, A>
     ) {
         super(initialValue);
-        if (this.effects) this.effects.dispatch = this.dispatch.bind(this);
+        if (this.effects) {
+            this.effects.actions$ = this.actionDispatched.asObservable();
+            this.effects.dispatch = this.dispatch.bind(this);
+        }
     }
 
     dispatch<ActionType extends keyof A>(
@@ -41,9 +45,7 @@ class Store<T, A> extends BehaviorSubject<T> {
         payload?: A[ActionType]
     ) {
         this.next(this.reducer.reduce(this.value, action, payload));
-        if (this.effects) {
-            this.effects.actionDispatched.next({ action, payload });
-        }
+        this.actionDispatched.next({ action, payload });
     }
 
     select<K extends keyof T>(key: K): Observable<T[K]>
