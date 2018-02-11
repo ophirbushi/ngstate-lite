@@ -29,6 +29,7 @@ class Effects<T, A>{
 
 class Store<T, A> extends BehaviorSubject<T> {
     private actionDispatched = new Subject<{ action: keyof A, payload: A[keyof A] }>();
+    actions$: Observable<{ action: keyof A, payload: A[keyof A] }> = this.actionDispatched.asObservable();
 
     constructor(
         initialValue: T,
@@ -37,7 +38,7 @@ class Store<T, A> extends BehaviorSubject<T> {
     ) {
         super(initialValue);
         if (this.effects) {
-            this.effects.actions$ = this.actionDispatched.asObservable();
+            this.effects.actions$ = this.actions$;
             this.effects.dispatch = this.dispatch.bind(this);
             this.effects.registerEffects();
         }
@@ -110,7 +111,9 @@ const effects = new Effects<NameStore, NameStoreActions>(
 
 const store = new Store<NameStore, NameStoreActions>({ name: null, size: null }, reducer, effects);
 
-//store.subscribe(console.log)
+store.subscribe(console.log)
+
+store.actions$.subscribe(console.log);
 
 const size$ = store.select('size');
 size$.subscribe(console.log);
