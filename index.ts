@@ -99,11 +99,11 @@ const effects = new Effects<NameStore, NameStoreActions>(
     function () {
         this.actionOfType(SET_NAME)
             .subscribe((payload) => {
-                effects.dispatch(SHORTEN_NAME, 1);
+                this.dispatch(SHORTEN_NAME, 1);
             });
         this.actionOfType(SET_SIZE)
             .subscribe((payload) => {
-                effects.dispatch(SET_NAME, 'now we are ' + payload);
+                this.dispatch(SET_NAME, 'now we are ' + payload);
             });
     }
 );
