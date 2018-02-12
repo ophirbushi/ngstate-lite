@@ -7,6 +7,8 @@ import { Observable } from 'rxjs/Observable';
 
 import { Store, Effects, Reducer } from '../src';
 
+import {  } from '../dist';
+
 class DATA {
     static load: 'DATA load' = 'DATA load';
     static fetch: 'DATA fetch' = 'DATA fetch';
