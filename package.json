@@ -2,7 +2,7 @@
   "name": "rxjs-lite",
   "version": "0.1.1",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc -p ."
   },
