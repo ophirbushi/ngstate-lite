@@ -1,14 +1,17 @@
 {
   "name": "rxjs-lite",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -p ."
   },
-  "author": "",
+  "author": "Ophir Bushinsky",
   "license": "ISC",
   "dependencies": {
-    "rxjs": "^5.5.6"
+    "rxjs": "^5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^2.1.0"
   }
 }
